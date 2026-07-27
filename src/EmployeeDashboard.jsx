@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './Dashboard.css';
 
 const getDateKey = (d = new Date()) => {
@@ -12,7 +13,7 @@ const getDateKey = (d = new Date()) => {
 const getDateDisplay = (d = new Date()) =>
   d.toLocaleDateString('en-IN', { weekday: 'long', month: 'long', day: 'numeric' });
 
-const ROCKET_DURATION_MS = 2600; // slow load duration
+const ROCKET_DURATION_MS = 2600;
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
@@ -23,9 +24,8 @@ const EmployeeDashboard = () => {
   const [checkInTimestamp, setCheckInTimestamp] = useState(null);
   const [elapsed, setElapsed] = useState(0);
 
-  // ✅ rocket animation state
-  const [rocketPhase, setRocketPhase] = useState(null); // 'in' | 'out' | null
-  const [percent, setPercent] = useState(1); // 1 -> 100 on check-in, 100 -> 1 on check-out
+  const [rocketPhase, setRocketPhase] = useState(null);
+  const [percent, setPercent] = useState(1);
   const rocketTimer = useRef(null);
   const percentInterval = useRef(null);
 
@@ -44,41 +44,58 @@ const EmployeeDashboard = () => {
   const [leaveReason, setLeaveReason] = useState('');
   const [leaveSubmitted, setLeaveSubmitted] = useState(false);
 
+  // Render Backend Live URL
+  const API_BASE_URL = 'https://diginexacrm.onrender.com';
+
   const getInitials = (name = '') =>
     name.trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
-  const loadTeamToday = (myEmpId) => {
-    const allAttendance = JSON.parse(localStorage.getItem('crm_attendance')) || [];
-    const todayKey = getDateKey();
-    const todayRecords = allAttendance.filter(
-      (r) => r.dateKey === todayKey && r.empId && r.empId !== myEmpId
-    );
-    setTeamToday(todayRecords);
+  const loadTeamToday = async (myEmpId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/attendance`);
+      const todayKey = getDateKey();
+      const todayRecords = response.data.filter(
+        (r) => r.dateKey === todayKey && r.empId && r.empId !== myEmpId
+      );
+      setTeamToday(todayRecords);
+    } catch (error) {
+      console.error('Error loading team attendance:', error);
+    }
   };
 
   useEffect(() => {
     setMounted(true);
-    const user = JSON.parse(localStorage.getItem('crm_logged_user'));
+    const userStr = localStorage.getItem('crm_logged_user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    
     if (!user || user.role !== 'employee') {
       navigate('/login');
       return;
     }
     setCurrentUser(user);
 
-    const allAttendance = JSON.parse(localStorage.getItem('crm_attendance')) || [];
-    const todayKey = getDateKey();
-    const record = allAttendance.find(a => a.empId === user.empId && a.dateKey === todayKey);
+    // Fetch employee today's status from server
+    const fetchMyStatus = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/attendance`);
+        const todayKey = getDateKey();
+        const record = response.data.find(a => a.empId === user.empId && a.dateKey === todayKey);
 
-    if (record) {
-      setTodayTask(record.task || '');
-      if (record.checkInTimestamp && !record.checkOutTimestamp) {
-        setIsCheckedIn(true);
-        setCheckInTimestamp(record.checkInTimestamp);
-        setElapsed(Math.floor((Date.now() - record.checkInTimestamp) / 1000));
-        setPercent(100);
+        if (record) {
+          setTodayTask(record.task || '');
+          if (record.checkInTimestamp && !record.checkOutTimestamp) {
+            setIsCheckedIn(true);
+            setCheckInTimestamp(record.checkInTimestamp);
+            setElapsed(Math.floor((Date.now() - record.checkInTimestamp) / 1000));
+            setPercent(100);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching employee status:', error);
       }
-    }
+    };
 
+    fetchMyStatus();
     loadTeamToday(user.empId);
   }, [navigate]);
 
@@ -120,35 +137,22 @@ const EmployeeDashboard = () => {
     toastTimer.current = setTimeout(() => setToast(null), 3000);
   };
 
-  const upsertAttendance = (updates) => {
-    const allAttendance = JSON.parse(localStorage.getItem('crm_attendance')) || [];
-    const todayKey = getDateKey();
-    const idx = allAttendance.findIndex(
-      a => a.empId === currentUser.empId && a.dateKey === todayKey
-    );
-
-    if (idx !== -1) {
-      allAttendance[idx] = { ...allAttendance[idx], ...updates };
-    } else {
-      allAttendance.push({
+  const upsertAttendance = async (updates) => {
+    try {
+      const todayKey = getDateKey();
+      await axios.post(`${API_BASE_URL}/api/attendance`, {
         empId: currentUser.empId,
         empName: currentUser.fullName,
         dateKey: todayKey,
         dateDisplay: getDateDisplay(),
-        checkInTime: '',
-        checkOutTime: '',
-        checkInTimestamp: null,
-        checkOutTimestamp: null,
-        hoursWorked: 0,
-        task: '',
-        status: 'Present',
-        ...updates,
+        task: todayTask,
+        ...updates
       });
+    } catch (error) {
+      console.error('Error updating attendance on server:', error);
     }
-    localStorage.setItem('crm_attendance', JSON.stringify(allAttendance));
   };
 
-  // ✅ animates percent number from `from` to `to` over ROCKET_DURATION_MS
   const animatePercent = (from, to, onDone) => {
     clearInterval(percentInterval.current);
     const steps = Math.abs(to - from);
@@ -167,10 +171,9 @@ const EmployeeDashboard = () => {
     }, stepTime);
   };
 
-  const handleCheckIn = () => {
+  const handleCheckIn = async () => {
     const now = Date.now();
 
-    // ✅ rocket flies left -> right, percent counts 1 -> 100
     setRocketPhase('in');
     setPercent(1);
     animatePercent(1, 100);
@@ -181,7 +184,7 @@ const EmployeeDashboard = () => {
     setCheckInTimestamp(now);
     setElapsed(0);
 
-    upsertAttendance({
+    await upsertAttendance({
       checkInTime: new Date(now).toLocaleTimeString(),
       checkInTimestamp: now,
       checkOutTime: '',
@@ -190,21 +193,21 @@ const EmployeeDashboard = () => {
     });
 
     showToast(`✅ Checked in at ${new Date(now).toLocaleTimeString()}`);
+    loadTeamToday(currentUser.empId);
   };
 
-  const handleCheckOut = () => {
+  const handleCheckOut = async () => {
     const now = Date.now();
     const finalElapsed = checkInTimestamp ? Math.floor((now - checkInTimestamp) / 1000) : elapsed;
     const hrs = (finalElapsed / 3600).toFixed(1);
 
-    upsertAttendance({
+    await upsertAttendance({
       checkOutTime: new Date(now).toLocaleTimeString(),
       checkOutTimestamp: now,
       hoursWorked: hrs,
       task: todayTask,
     });
 
-    // ✅ rocket flies right -> left (reverse), percent counts 100 -> 1
     setRocketPhase('out');
     setPercent(100);
     animatePercent(100, 1);
@@ -220,21 +223,22 @@ const EmployeeDashboard = () => {
       setShowSuccess(false);
       showToast('🎉 Check-out Successful!');
     }, 1800);
+    loadTeamToday(currentUser.empId);
   };
 
-  const saveTask = () => {
+  const saveTask = async () => {
     if (!todayTask.trim()) {
       showToast('⚠️ Type your task first!');
       return;
     }
-    upsertAttendance({ task: todayTask });
+    await upsertAttendance({ task: todayTask });
     setTaskSaved(true);
     showToast('📝 Task saved!');
     setTimeout(() => setTaskSaved(false), 1500);
     loadTeamToday(currentUser.empId);
   };
 
-  const handleLeaveSubmit = () => {
+  const handleLeaveSubmit = async () => {
     if (!leaveFrom || !leaveTo) {
       showToast('⚠️ Select From and To date!');
       return;
@@ -248,27 +252,30 @@ const EmployeeDashboard = () => {
       return;
     }
 
-    const allLeaves = JSON.parse(localStorage.getItem('crm_leaves')) || [];
-    allLeaves.push({
-      empId: currentUser.empId,
-      empName: currentUser.fullName,
-      fromDate: leaveFrom,
-      toDate: leaveTo,
-      reason: leaveReason,
-      status: 'Pending',
-      appliedAt: Date.now(),
-    });
-    localStorage.setItem('crm_leaves', JSON.stringify(allLeaves));
+    try {
+      await axios.post(`${API_BASE_URL}/api/leaves`, {
+        empId: currentUser.empId,
+        empName: currentUser.fullName,
+        fromDate: leaveFrom,
+        toDate: leaveTo,
+        reason: leaveReason,
+        status: 'Pending',
+        appliedAt: Date.now(),
+      });
 
-    setLeaveSubmitted(true);
-    setTimeout(() => {
-      setShowLeaveModal(false);
-      setLeaveSubmitted(false);
-      setLeaveFrom('');
-      setLeaveTo('');
-      setLeaveReason('');
-      showToast('✅ Leave request submitted!');
-    }, 1200);
+      setLeaveSubmitted(true);
+      setTimeout(() => {
+        setShowLeaveModal(false);
+        setLeaveSubmitted(false);
+        setLeaveFrom('');
+        setLeaveTo('');
+        setLeaveReason('');
+        showToast('✅ Leave request submitted!');
+      }, 1200);
+    } catch (error) {
+      console.error('Error submitting leave:', error);
+      showToast('❌ Failed to submit leave request.');
+    }
   };
 
   const handleLogout = () => {
@@ -278,10 +285,7 @@ const EmployeeDashboard = () => {
 
   if (!currentUser) return null;
 
-  // ✅ derive fill width, rocket position, rocket facing direction
   const fillWidth = `${percent}%`;
-  const rocketLeft = `calc(${percent}% - ${percent > 0 ? '1.6rem * ' + (percent / 100) : '0px'})`;
-  // Simpler & robust: position rocket proportionally along the track (0% -> left edge, 100% -> right edge)
   const rocketPositionStyle = {
     left: `calc(${(percent - 1) / 99 * 100}% - ${((percent - 1) / 99) * 1.6}rem)`,
   };
@@ -298,7 +302,6 @@ const EmployeeDashboard = () => {
                 <h1>Hello, <span className="accent">{currentUser.fullName}</span>! 👋</h1>
                 <p className="muted">Track your work and manage tasks efficiently.</p>
               </div>
-              {/* ✅ Logout button added here */}
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button className="btn btn-leave" onClick={() => setShowLeaveModal(true)}>
                   🏖️ Leave Form
@@ -360,7 +363,6 @@ const EmployeeDashboard = () => {
               </div>
             </div>
 
-            {/* ✅ Rocket check-in/out animation */}
             <div className="mascot-box">
               <div className="rocket-stage">
                 <div className="rocket-track">

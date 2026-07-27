@@ -1,25 +1,43 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './EmployeeAttendance.css';
 
 const EmployeeAttendance = () => {
   const navigate = useNavigate();
+  const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [records, setRecords] = useState(() => {
-    const saved = JSON.parse(localStorage.getItem('crm_attendance')) || [];
-    // ✅ Mock / invalid records (no empId or empName) filter out pannurom
-    const valid = saved.filter(r => r.empId && r.empName);
-    return [...valid].reverse();
-  });
+  // Render Backend Live URL
+  const API_BASE_URL = 'https://diginexacrm.onrender.com';
 
   const [search, setSearch] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
 
+  // Backend-lenthum attendance records-ah fetch panrom
+  useEffect(() => {
+    fetchAttendanceRecords();
+  }, []);
+
+  const fetchAttendanceRecords = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/attendance`);
+      if (response.data) {
+        const valid = response.data.filter(r => r.empId && r.empName);
+        setRecords([...valid].reverse());
+      }
+    } catch (error) {
+      console.error('Error fetching attendance:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getInitials = (name = '') =>
     name.trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
-  // ✅ Time without seconds (handles old records that still have seconds)
+  // Time without seconds
   const formatTime = (timeStr) => {
     if (!timeStr) return '--';
     const match = timeStr.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*([APap][Mm])?/);
@@ -62,10 +80,15 @@ const EmployeeAttendance = () => {
     setToDate('');
   };
 
-  const handleDeleteAll = () => {
-    if (window.confirm(`Delete all ${records.length} attendance records? This cannot be undone.`)) {
-      localStorage.setItem('crm_attendance', JSON.stringify([]));
-      setRecords([]);
+  const handleDeleteAll = async () => {
+    if (window.confirm(`Delete all ${records.length} attendance records from server? This cannot be undone.`)) {
+      try {
+        await axios.delete(`${API_BASE_URL}/api/attendance`);
+        setRecords([]);
+      } catch (error) {
+        console.error('Error deleting attendance:', error);
+        alert('Failed to delete records from server.');
+      }
     }
   };
 
@@ -137,7 +160,9 @@ const EmployeeAttendance = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredRecords.length === 0 ? (
+            {loading ? (
+              <tr><td colSpan="7" className="att-empty">Loading attendance from server...</td></tr>
+            ) : filteredRecords.length === 0 ? (
               <tr><td colSpan="7" className="att-empty">No attendance records found.</td></tr>
             ) : (
               filteredRecords.map((rec, i) => (
@@ -169,7 +194,9 @@ const EmployeeAttendance = () => {
 
       {/* Mobile Card List */}
       <div className="att-mobile-list">
-        {filteredRecords.length === 0 ? (
+        {loading ? (
+          <div className="att-empty-mobile">Loading attendance from server...</div>
+        ) : filteredRecords.length === 0 ? (
           <div className="att-empty-mobile">No attendance records found.</div>
         ) : (
           filteredRecords.map((rec, i) => (

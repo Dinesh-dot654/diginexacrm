@@ -1,16 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './EmployeeDetails.css';
 
 function EmployeeDetails() {
   const navigate = useNavigate();
-
-  const [employees, setEmployees] = useState(() => {
-    const saved = JSON.parse(localStorage.getItem('crm_employees')) || [];
-    return saved;
-  });
-
+  const [employees, setEmployees] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+
+  // Render Backend Live URL
+  const API_BASE_URL = 'https://diginexacrm.onrender.com';
+
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/employees`);
+      if (response.data) {
+        setEmployees(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getInitials = (name = '') =>
     name.trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
@@ -22,11 +39,16 @@ function EmployeeDetails() {
     emp.email?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleDelete = (empId) => {
-    if (window.confirm('Delete this employee record?')) {
-      const updated = employees.filter(e => e.empId !== empId);
-      localStorage.setItem('crm_employees', JSON.stringify(updated));
-      setEmployees(updated);
+  const handleDelete = async (empId) => {
+    if (window.confirm('Delete this employee record from server?')) {
+      try {
+        await axios.delete(`${API_BASE_URL}/api/employees/${empId}`);
+        const updated = employees.filter(e => e.empId !== empId);
+        setEmployees(updated);
+      } catch (error) {
+        console.error('Error deleting employee:', error);
+        alert('Failed to delete employee from server.');
+      }
     }
   };
 
@@ -72,7 +94,9 @@ function EmployeeDetails() {
             </tr>
           </thead>
           <tbody>
-            {filteredEmployees.length === 0 ? (
+            {loading ? (
+              <tr><td colSpan="6" className="ed-empty">Loading employees from server...</td></tr>
+            ) : filteredEmployees.length === 0 ? (
               <tr><td colSpan="6" className="ed-empty">No employees found. Click "Add Employee" to create one.</td></tr>
             ) : (
               filteredEmployees.map((emp, i) => (
@@ -99,7 +123,9 @@ function EmployeeDetails() {
 
       {/* Mobile Cards */}
       <div className="ed-mobile-list">
-        {filteredEmployees.length === 0 ? (
+        {loading ? (
+          <div className="ed-empty-mobile">Loading employees from server...</div>
+        ) : filteredEmployees.length === 0 ? (
           <div className="ed-empty-mobile">No employees found. Click "Add Employee" to create one.</div>
         ) : (
           filteredEmployees.map((emp, i) => (

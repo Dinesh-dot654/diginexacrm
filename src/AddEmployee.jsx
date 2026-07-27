@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './AddEmployee.css';
 
 const AddEmployee = () => {
   const navigate = useNavigate();
   const [photoPreview, setPhotoPreview] = useState(null);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Render Backend Live URL
+  const API_BASE_URL = 'https://diginexacrm.onrender.com';
 
   const [formData, setFormData] = useState({
     empId: 'digi_',
@@ -34,21 +39,31 @@ const AddEmployee = () => {
   const getInitials = (name = '') =>
     name.trim().split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
     if (formData.empId.trim() === 'digi_' || !formData.fullName.trim()) {
       alert('Please fill the complete Emp ID and Full Name!');
       return;
     }
 
-    const employees = JSON.parse(localStorage.getItem('crm_employees')) || [];
-    const updatedList = [...employees, formData];
-    localStorage.setItem('crm_employees', JSON.stringify(updatedList));
+    setLoading(true);
 
-    setFormData({ empId: 'digi_', fullName: '', email: '', mobile: '', password: '', photo: '' });
-    setPhotoPreview(null);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    try {
+      // Backend server-kku employee data-va anuppurom
+      const response = await axios.post(`${API_BASE_URL}/api/employees`, formData);
+
+      if (response.data) {
+        setFormData({ empId: 'digi_', fullName: '', email: '', mobile: '', password: '', photo: '' });
+        setPhotoPreview(null);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } catch (error) {
+      console.error('Error saving employee:', error);
+      alert(error.response?.data?.message || 'Failed to save employee to server. Try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -151,8 +166,8 @@ const AddEmployee = () => {
           </div>
 
           <div className="ae-submit-section">
-            <button type="submit" className={`ae-submit-btn ${saved ? 'saved' : ''}`}>
-              {saved ? '✔ Saved!' : 'Save Employee'}
+            <button type="submit" className={`ae-submit-btn ${saved ? 'saved' : ''}`} disabled={loading}>
+              {loading ? 'Saving...' : saved ? '✔ Saved!' : 'Save Employee'}
             </button>
           </div>
         </form>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './Login.css';
 
 function Login() {
@@ -7,30 +8,49 @@ function Login() {
   const [officeId, setOfficeId] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  // Render Backend Live URL
+  const API_BASE_URL = 'https://diginexacrm.onrender.com';
+
+  const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMsg('');
+    setLoading(true);
 
-    // --- 1. ADMIN LOGIN ---
-    if (officeId === 'digi_nexa' && password === 'dinesh@123') {
-      localStorage.setItem('crm_logged_user', JSON.stringify({ role: 'admin', fullName: 'Admin Dinesh', empId: 'digi_nexa' }));
-      navigate('/'); 
-      return;
+    try {
+      // --- 1. ADMIN HARDCODED LOGIN (Or Backend Check) ---
+      if (officeId === 'digi_nexa' && password === 'dinesh@123') {
+        localStorage.setItem('crm_logged_user', JSON.stringify({ role: 'admin', fullName: 'Admin Dinesh', empId: 'digi_nexa' }));
+        setLoading(false);
+        navigate('/'); 
+        return;
+      }
+
+      // --- 2. BACKEND API LOGIN CHECK ---
+      const response = await axios.post(`${API_BASE_URL}/api/login`, {
+        officeId,
+        password
+      });
+
+      if (response.data && response.data.success) {
+        // Server kitta irunthu vantha user data-vum role-um save panrom
+        localStorage.setItem('crm_logged_user', JSON.stringify(response.data.user));
+        
+        if (response.data.user.role === 'admin') {
+          navigate('/');
+        } else {
+          navigate('/employee-dashboard');
+        }
+      } else {
+        setErrorMsg('Invalid Office ID or Password! Access Denied.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setErrorMsg(error.response?.data?.message || 'Server connection failed. Try again later.');
+    } finally {
+      setLoading(false);
     }
-
-    // --- 2. EMPLOYEE LOGIN (Checking against Local DB) ---
-    const storedEmployees = JSON.parse(localStorage.getItem('crm_employees')) || [];
-    const validEmployee = storedEmployees.find(emp => emp.empId === officeId && emp.password === password);
-
-    if (validEmployee) {
-      // Correct aana aal thaan nu confirm pannitu current user-ah save pandrom
-      localStorage.setItem('crm_logged_user', JSON.stringify({ role: 'employee', ...validEmployee }));
-      navigate('/employee-dashboard'); 
-      return;
-    }
-
-    setErrorMsg('Invalid Office ID or Password! Access Denied.');
   };
 
   return (
@@ -54,7 +74,9 @@ function Login() {
             <label>Password</label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your Password" required />
           </div>
-          <button type="submit" className="login-btn">Login</button>
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
+          </button>
         </form>
       </div>
     </div>
