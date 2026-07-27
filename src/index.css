@@ -1,0 +1,22 @@
+/* src/index.css */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100%;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background-color: #f4f7f6; /* Namma login page background color */
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}

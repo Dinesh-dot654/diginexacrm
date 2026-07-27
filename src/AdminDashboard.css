@@ -1,0 +1,111 @@
+/* src/AdminDashboard.css */
+
+.admin-container {
+  min-height: 100vh;
+  background-color: #333333; 
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background-color: #1a1a1a; 
+  border-bottom: 2px solid #ffffff; 
+}
+
+.admin-header h2 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.admin-header span {
+  color: #b3b3b3; 
+  font-weight: normal;
+}
+
+.logout-btn {
+  background-color: #ffffff; 
+  color: #333333; 
+  border: none;
+  padding: 8px 20px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background-color: #cccccc;
+}
+
+/* Cards Container */
+.dashboard-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  padding: 60px 40px;
+  flex-wrap: wrap; 
+}
+
+/* Individual Boxes */
+.dashboard-card {
+  background-color: #ffffff; 
+  color: #333333; 
+  width: 320px;
+  height: 250px;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.3s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-5px); 
+}
+
+.dashboard-card h3 {
+  margin: 0;
+  font-size: 22px;
+  border-bottom: 2px solid #333333;
+  padding-bottom: 15px;
+}
+
+.dashboard-card p {
+  color: #555555;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.card-btn {
+  background-color: #333333; 
+  color: #ffffff; 
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.card-btn:hover {
+  background-color: #1a1a1a;
+}
+/* --- Admin Dashboard Scroll Fix --- */
+.admin-scroll-fix {
+  height: 100vh !important;       /* Screen height-ah fix pandrom */
+  overflow-y: auto !important;    /* Vertical scroll-ah enable pandrom */
+  overflow-x: hidden !important;  /* Horizontal scroll-ah block pandrom */
+  width: 100% !important;
+  padding-bottom: 5rem !important; /* Keezha extra space kedaikka */
+  box-sizing: border-box !important;
+}

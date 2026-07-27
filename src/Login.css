@@ -1,0 +1,195 @@
+/* src/Login.css */
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  /* Background Image Setup */
+  background-image: url('./assets/camera.jpg'); 
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  font-family: Arial, sans-serif;
+}
+
+.login-box {
+  /* Glassmorphism Effect */
+  background: rgba(255, 255, 255, 0.15); /* Semi-transparent white */
+  backdrop-filter: blur(15px); /* Kannadi mathiri blur effect */
+  -webkit-backdrop-filter: blur(15px); /* Safari browser support */
+  border: 1px solid rgba(255, 255, 255, 0.3); /* Glass-oda edge highlight */
+  
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); /* Soft shadow */
+  width: 350px;
+  text-align: center;
+}
+
+/* Text colors-ah white-ku mathi irukken, appo thaan image mela nalla theliya theriyum */
+.login-box h2 {
+  margin: 0 0 5px 0;
+  color: #ffffff;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.5); /* Shadow for readability */
+}
+
+.login-box p {
+  margin: 0 0 25px 0;
+  color: #e0e0e0;
+}
+
+.input-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #ffffff;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px;
+  
+  /* Input box-kum glass effect */
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  font-size: 16px;
+  color: #ffffff; 
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+/* Placeholder (Enter your ID) color */
+.input-group input::placeholder {
+  color: #dddddd;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.25); /* Click pannumbothu light-ah highlight aagum */
+}
+
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+}
+
+.login-btn:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px); /* Hover pannumbothu mela thooki kaamikum */
+}
+/* src/Login.css */
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  /* Background Image Setup */
+  background-image: url('./assets/camera.jpg'); 
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  font-family: Arial, sans-serif;
+}
+
+.login-box {
+  /* Glassmorphism Effect */
+  background: rgba(255, 255, 255, 0.15); /* Semi-transparent white */
+  backdrop-filter: blur(15px); /* Kannadi mathiri blur effect */
+  -webkit-backdrop-filter: blur(15px); /* Safari browser support */
+  border: 1px solid rgba(255, 255, 255, 0.3); /* Glass-oda edge highlight */
+  
+  padding: 40px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); /* Soft shadow */
+  width: 350px;
+  text-align: center;
+}
+
+/* Text colors-ah Light Grey-ku mathiyachu */
+.login-box h2 {
+  margin: 0 0 5px 0;
+  color: #e0e0e0; /* Light Grey */
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.5); /* Ezhuthu theliva theriya shadow */
+}
+
+.login-box p {
+  margin: 0 0 25px 0;
+  color: #cccccc; /* Light Grey */
+}
+
+.input-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #e0e0e0; /* Light Grey */
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.input-group input {
+  width: 100%;
+  padding: 12px;
+  
+  /* Input box-kum glass effect */
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 8px;
+  font-size: 16px;
+  color: #ffffff; 
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+/* Placeholder (Enter your ID) color */
+.input-group input::placeholder {
+  color: #cccccc; /* Light grey placeholder */
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #e0e0e0;
+  background: rgba(255, 255, 255, 0.25); 
+}
+
+/* Button background Light Grey-ku mathiyachu */
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #cccccc; /* Light Grey Button */
+  color: #333333; /* Light grey button mela dark text pota thaan nalla theriyum */
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.login-btn:hover {
+  background-color: #b3b3b3; /* Hover pannum pothu konjam dark aagum */
+  transform: translateY(-2px); 
+}
