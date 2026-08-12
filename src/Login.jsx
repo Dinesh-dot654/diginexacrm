@@ -11,7 +11,7 @@ function Login() {
   const [loading, setLoading] = useState(false);
 
   // Render Backend Live URL
-  const API_BASE_URL = 'https://diginexacrm.onrender.com';
+  const API_BASE_URL = 'https://diginexacrm-backend.onrender.com';
 
   const handleLogin = async (e) => {
     e.preventDefault();

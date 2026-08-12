@@ -9,7 +9,7 @@ const EmployeeAttendance = () => {
   const [loading, setLoading] = useState(true);
 
   // Render Backend Live URL
-  const API_BASE_URL = 'https://diginexacrm.onrender.com';
+  const API_BASE_URL = 'https://diginexacrm-backend.onrender.com';
 
   const [search, setSearch] = useState('');
   const [fromDate, setFromDate] = useState('');

@@ -45,7 +45,7 @@ const EmployeeDashboard = () => {
   const [leaveSubmitted, setLeaveSubmitted] = useState(false);
 
   // Render Backend Live URL
-  const API_BASE_URL = 'https://diginexacrm.onrender.com';
+  const API_BASE_URL = 'https://diginexacrm-backend.onrender.com';
 
   const getInitials = (name = '') =>
     name.trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();

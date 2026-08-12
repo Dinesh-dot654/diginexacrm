@@ -10,7 +10,7 @@ function EmployeeDetails() {
   const [search, setSearch] = useState('');
 
   // Render Backend Live URL
-  const API_BASE_URL = 'https://diginexacrm.onrender.com';
+  const API_BASE_URL = 'https://diginexacrm-backend.onrender.com';
 
   useEffect(() => {
     fetchEmployees();
