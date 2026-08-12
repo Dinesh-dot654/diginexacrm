@@ -1,14 +1,19 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+import dotenv from 'dotenv'; // Environment variables-ah read panna ithu thevai
 import Employee from './Employee.js'; 
+
+// .env config setup
+dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Unga pudhu password 'dinesh123' theliva inga update panniyachu
-const dbURI = "mongodb://dineshadaikkappan85_db_user:dinesh123@ac-um52mwv-shard-00-00.iczyidp.mongodb.net:27017,ac-um52mwv-shard-00-01.iczyidp.mongodb.net:27017,ac-um52mwv-shard-00-02.iczyidp.mongodb.net:27017/DiginexaCRM?ssl=true&replicaSet=atlas-sh4lq7-shard-0&authSource=admin&appName=robotriqDB";
+// Direct link-kku bathila Render-la set panna variable-ah edukkurom
+const dbURI = process.env.MONGO_URI;
+const PORT = process.env.PORT || 5000;
 
 // IPv6 / Network block thadukka { family: 4 } potirukken
 mongoose.connect(dbURI, { family: 4 })
@@ -25,6 +30,6 @@ app.post('/add-employee', async (req, res) => {
     }
 });
 
-app.listen(5000, () => {
-    console.log("Server is running on port 5000");
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
