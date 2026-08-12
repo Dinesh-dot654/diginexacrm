@@ -49,8 +49,8 @@ const AddEmployee = () => {
     setLoading(true);
 
     try {
-      // Backend server-kku employee data-va anuppurom
-      const response = await axios.post(`${API_BASE_URL}/api/employees`, formData);
+      // Corrected route to match backend /add-employee endpoint
+      const response = await axios.post(`${API_BASE_URL}/add-employee`, formData);
 
       if (response.data) {
         setFormData({ empId: 'digi_', fullName: '', email: '', mobile: '', password: '', photo: '' });
@@ -60,7 +60,7 @@ const AddEmployee = () => {
       }
     } catch (error) {
       console.error('Error saving employee:', error);
-      alert(error.response?.data?.message || 'Failed to save employee to server. Try again.');
+      alert(error.response?.data?.error || error.response?.data?.message || 'Failed to save employee to server. Try again.');
     } finally {
       setLoading(false);
     }
