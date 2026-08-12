@@ -20,7 +20,7 @@ mongoose.connect(dbURI, { family: 4 })
   .then(() => console.log("MongoDB Connected Successfully!"))
   .catch((err) => console.log("Connection Error:", err));
 
-// 1. ADD EMPLOYEE (POST ROUTE)
+// 1. ADD EMPLOYEE (POST)
 app.post('/add-employee', async (req, res) => {
     try {
         const newEmployee = new Employee(req.body);
@@ -31,7 +31,7 @@ app.post('/add-employee', async (req, res) => {
     }
 });
 
-// 2. GET EMPLOYEES (GET ROUTE) - Ithu thaan frontend-la data-va kaatum!
+// 2. GET EMPLOYEES (GET)
 app.get('/api/employees', async (req, res) => {
     try {
         const employees = await Employee.find();
@@ -41,13 +41,36 @@ app.get('/api/employees', async (req, res) => {
     }
 });
 
-// 3. DELETE EMPLOYEE (DELETE ROUTE) - Delete button work aaga
+// 3. DELETE EMPLOYEE (DELETE)
 app.delete('/api/employees/:empId', async (req, res) => {
     try {
         await Employee.findOneAndDelete({ empId: req.params.empId });
         res.status(200).json({ message: 'Employee deleted successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+});
+
+// 4. LOGIN CHECK (POST) - Ithu thaan ippo miss aachu!
+app.post('/api/login', async (req, res) => {
+    try {
+        const { officeId, password } = req.body;
+
+        // Database-la antha ID & Password vachi employee irukkangala nu thedurom
+        const employee = await Employee.findOne({ empId: officeId, password: password });
+        
+        if (employee) {
+            // Employee match aagitaa, success nu anuppurom
+            res.status(200).json({ 
+                success: true, 
+                user: { role: 'employee', fullName: employee.name, empId: employee.empId } 
+            });
+        } else {
+            // Match aagalana error message
+            res.status(401).json({ success: false, message: 'Invalid Office ID or Password! Access Denied.' });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error during login' });
     }
 });
 
