@@ -41,25 +41,19 @@ const AddEmployee = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (formData.empId.trim() === 'digi_' || !formData.fullName.trim()) {
-      alert('Please fill the complete Emp ID and Full Name!');
-      return;
-    }
-
     setLoading(true);
 
     try {
-      // Backend schema-kku etha mathiri data-va map pandrom
+      // User ethu pottaalum, illa empty-aah vittalum error varama irukka default fallback values!
       const payload = {
-        empId: formData.empId,
-        name: formData.fullName, // Inga thaan 'fullName' ah 'name' nu maathi anuppurom!
-        email: formData.email,
-        mobile: formData.mobile,
-        password: formData.password,
-        photo: formData.photo
+        empId: formData.empId && formData.empId !== 'digi_' ? formData.empId : `digi_${Math.floor(Math.random() * 10000)}`,
+        name: formData.fullName || 'No Name Provided',
+        email: formData.email || 'no-email@company.com',
+        mobile: formData.mobile || 'Not Provided',
+        password: formData.password || 'default123',
+        photo: formData.photo || ''
       };
 
-      // Corrected route to match backend /add-employee endpoint with payload
       const response = await axios.post(`${API_BASE_URL}/add-employee`, payload);
 
       if (response.data) {
@@ -122,7 +116,6 @@ const AddEmployee = () => {
                 value={formData.empId}
                 onChange={handleChange}
                 placeholder="e.g. digi_001"
-                required
               />
             </div>
 
@@ -134,7 +127,6 @@ const AddEmployee = () => {
                 value={formData.fullName}
                 onChange={handleChange}
                 placeholder="Enter full name"
-                required
               />
             </div>
 
@@ -146,7 +138,6 @@ const AddEmployee = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="employee@company.com"
-                required
               />
             </div>
 
@@ -158,7 +149,6 @@ const AddEmployee = () => {
                 value={formData.mobile}
                 onChange={handleChange}
                 placeholder="98765 43210"
-                required
               />
             </div>
 
@@ -170,7 +160,6 @@ const AddEmployee = () => {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Set a login password"
-                required
               />
             </div>
           </div>
