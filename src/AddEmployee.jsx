@@ -49,8 +49,18 @@ const AddEmployee = () => {
     setLoading(true);
 
     try {
-      // Corrected route to match backend /add-employee endpoint
-      const response = await axios.post(`${API_BASE_URL}/add-employee`, formData);
+      // Backend schema-kku etha mathiri data-va map pandrom
+      const payload = {
+        empId: formData.empId,
+        name: formData.fullName, // Inga thaan 'fullName' ah 'name' nu maathi anuppurom!
+        email: formData.email,
+        mobile: formData.mobile,
+        password: formData.password,
+        photo: formData.photo
+      };
+
+      // Corrected route to match backend /add-employee endpoint with payload
+      const response = await axios.post(`${API_BASE_URL}/add-employee`, payload);
 
       if (response.data) {
         setFormData({ empId: 'digi_', fullName: '', email: '', mobile: '', password: '', photo: '' });
