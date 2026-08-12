@@ -34,7 +34,7 @@ function EmployeeDetails() {
 
   const filteredEmployees = employees.filter(emp =>
     !search ||
-    emp.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+    emp.name?.toLowerCase().includes(search.toLowerCase()) || // Fixed to emp.name
     emp.empId?.toLowerCase().includes(search.toLowerCase()) ||
     emp.email?.toLowerCase().includes(search.toLowerCase())
   );
@@ -104,10 +104,12 @@ function EmployeeDetails() {
                   <td className="ed-id">{emp.empId}</td>
                   <td>
                     <div className="ed-photo">
-                      {emp.photo ? <img src={emp.photo} alt={emp.fullName} /> : getInitials(emp.fullName)}
+                      {/* Fixed to emp.name */}
+                      {emp.photo ? <img src={emp.photo} alt={emp.name} /> : getInitials(emp.name)}
                     </div>
                   </td>
-                  <td className="ed-name">{emp.fullName}</td>
+                  {/* Fixed to emp.name */}
+                  <td className="ed-name">{emp.name}</td>
                   <td>{emp.email}</td>
                   <td>{emp.mobile}</td>
                   <td className="ed-actions">
@@ -132,10 +134,12 @@ function EmployeeDetails() {
             <div className="ed-mobile-card" key={i}>
               <div className="ed-mobile-top">
                 <div className="ed-photo">
-                  {emp.photo ? <img src={emp.photo} alt={emp.fullName} /> : getInitials(emp.fullName)}
+                  {/* Fixed to emp.name */}
+                  {emp.photo ? <img src={emp.photo} alt={emp.name} /> : getInitials(emp.name)}
                 </div>
                 <div>
-                  <div className="ed-name">{emp.fullName}</div>
+                  {/* Fixed to emp.name */}
+                  <div className="ed-name">{emp.name}</div>
                   <div className="ed-id">{emp.empId}</div>
                 </div>
               </div>
