@@ -74,7 +74,6 @@ const EmployeeDashboard = () => {
     }
     setCurrentUser(user);
 
-    // Fetch employee today's status from server
     const fetchMyStatus = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/attendance`);
@@ -196,7 +195,14 @@ const EmployeeDashboard = () => {
     loadTeamToday(currentUser.empId);
   };
 
+  // CHECKOUT LOGIC WITH VALIDATION (Mobile & Desktop)
   const handleCheckOut = async () => {
+    // 1. Check if Task is empty
+    if (!todayTask || todayTask.trim() === '') {
+      showToast('⚠️ Check-out failed! Please enter your work summary today.');
+      return; // Stop the checkout process here
+    }
+
     const now = Date.now();
     const finalElapsed = checkInTimestamp ? Math.floor((now - checkInTimestamp) / 1000) : elapsed;
     const hrs = (finalElapsed / 3600).toFixed(1);
@@ -205,7 +211,7 @@ const EmployeeDashboard = () => {
       checkOutTime: new Date(now).toLocaleTimeString(),
       checkOutTimestamp: now,
       hoursWorked: hrs,
-      task: todayTask,
+      task: todayTask, // Ensure the latest task is saved
     });
 
     setRocketPhase('out');
@@ -384,7 +390,11 @@ const EmployeeDashboard = () => {
                 <span>▶</span> CHECK IN
               </button>
             ) : (
-              <button className="btn btn-checkout" onClick={handleCheckOut}>
+              <button 
+                className="btn btn-checkout" 
+                onClick={handleCheckOut}
+                // Optional: visually disable it if you want, but alert is better UX
+              >
                 <span>⏹</span> CHECK OUT
               </button>
             )}
