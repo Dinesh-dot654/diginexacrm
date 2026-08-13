@@ -29,7 +29,9 @@ const EmployeeDashboard = () => {
   const rocketTimer = useRef(null);
   const percentInterval = useRef(null);
 
-  const [todayTask, setTodayTask] = useState('');
+  // Thani Thani States
+  const [liveTask, setLiveTask] = useState(''); // Team-kku kaata
+  const [workSummary, setWorkSummary] = useState(''); // Admin Attendance-kku anuppa
   const [taskSaved, setTaskSaved] = useState(false);
 
   const [teamToday, setTeamToday] = useState([]);
@@ -55,7 +57,7 @@ const EmployeeDashboard = () => {
       const response = await axios.get(`${API_BASE_URL}/api/attendance`);
       const todayKey = getDateKey();
       const todayRecords = response.data.filter(
-        (r) => r.dateKey === todayKey && r.empId && r.empId !== myEmpId
+        (r) => r.dateKey === todayKey && r.empId && r.empId !== myEmpId && r.empId.startsWith('digi_')
       );
       setTeamToday(todayRecords);
     } catch (error) {
@@ -81,7 +83,8 @@ const EmployeeDashboard = () => {
         const record = response.data.find(a => a.empId === user.empId && a.dateKey === todayKey);
 
         if (record) {
-          setTodayTask(record.task || '');
+          setLiveTask(record.liveTask || '');
+          setWorkSummary(record.task || '');
           if (record.checkInTimestamp && !record.checkOutTimestamp) {
             setIsCheckedIn(true);
             setCheckInTimestamp(record.checkInTimestamp);
@@ -144,7 +147,6 @@ const EmployeeDashboard = () => {
         empName: currentUser.fullName,
         dateKey: todayKey,
         dateDisplay: getDateDisplay(),
-        task: todayTask,
         ...updates
       });
     } catch (error) {
@@ -172,7 +174,6 @@ const EmployeeDashboard = () => {
 
   const handleCheckIn = async () => {
     const now = Date.now();
-
     setRocketPhase('in');
     setPercent(1);
     animatePercent(1, 100);
@@ -195,23 +196,23 @@ const EmployeeDashboard = () => {
     loadTeamToday(currentUser.empId);
   };
 
-  // CHECKOUT LOGIC WITH VALIDATION (Mobile & Desktop)
+  // CHECKOUT LOGIC WITH STRICT WORK SUMMARY VALIDATION
   const handleCheckOut = async () => {
-    // 1. Check if Task is empty
-    if (!todayTask || todayTask.trim() === '') {
-      showToast('⚠️ Check-out failed! Please enter your work summary today.');
-      return; // Stop the checkout process here
+    if (!workSummary || workSummary.trim() === '') {
+      showToast('⚠️ Please enter your Work Summary to check out!');
+      return; 
     }
 
     const now = Date.now();
     const finalElapsed = checkInTimestamp ? Math.floor((now - checkInTimestamp) / 1000) : elapsed;
     const hrs = (finalElapsed / 3600).toFixed(1);
 
+    // Save strictly to "task" so Admin Attendance page reads it perfectly
     await upsertAttendance({
       checkOutTime: new Date(now).toLocaleTimeString(),
       checkOutTimestamp: now,
       hoursWorked: hrs,
-      task: todayTask, // Ensure the latest task is saved
+      task: workSummary, 
     });
 
     setRocketPhase('out');
@@ -232,30 +233,28 @@ const EmployeeDashboard = () => {
     loadTeamToday(currentUser.empId);
   };
 
-  const saveTask = async () => {
-    if (!todayTask.trim()) {
-      showToast('⚠️ Type your task first!');
+  const saveLiveTask = async () => {
+    if (!liveTask.trim()) {
+      showToast('⚠️ Type your live task first!');
       return;
     }
-    await upsertAttendance({ task: todayTask });
+    // Save live status broadcast
+    await upsertAttendance({ liveTask: liveTask });
     setTaskSaved(true);
-    showToast('📝 Task saved!');
+    showToast('📡 Live Task broadcasted to team!');
     setTimeout(() => setTaskSaved(false), 1500);
     loadTeamToday(currentUser.empId);
   };
 
   const handleLeaveSubmit = async () => {
     if (!leaveFrom || !leaveTo) {
-      showToast('⚠️ Select From and To date!');
-      return;
+      showToast('⚠️ Select From and To date!'); return;
     }
     if (leaveTo < leaveFrom) {
-      showToast('⚠️ To Date cannot be before From Date!');
-      return;
+      showToast('⚠️ To Date cannot be before From Date!'); return;
     }
     if (!leaveReason.trim()) {
-      showToast('⚠️ Please enter a reason!');
-      return;
+      showToast('⚠️ Please enter a reason!'); return;
     }
 
     try {
@@ -292,9 +291,7 @@ const EmployeeDashboard = () => {
   if (!currentUser) return null;
 
   const fillWidth = `${percent}%`;
-  const rocketPositionStyle = {
-    left: `calc(${(percent - 1) / 99 * 100}% - ${((percent - 1) / 99) * 1.6}rem)`,
-  };
+  const rocketPositionStyle = { left: `calc(${(percent - 1) / 99 * 100}% - ${((percent - 1) / 99) * 1.6}rem)` };
   const rocketFacingClass = rocketPhase === 'out' ? 'facing-left' : '';
 
   return (
@@ -309,16 +306,12 @@ const EmployeeDashboard = () => {
                 <p className="muted">Track your work and manage tasks efficiently.</p>
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
-                <button className="btn btn-leave" onClick={() => setShowLeaveModal(true)}>
-                  🏖️ Leave Form
-                </button>
+                <button className="btn btn-leave" onClick={() => setShowLeaveModal(true)}>🏖️ Leave Form</button>
                 <button 
                   className="btn btn-leave" 
                   style={{ background: 'transparent', border: '1px solid #ef4444', color: '#ef4444' }} 
                   onClick={handleLogout}
-                >
-                  Logout
-                </button>
+                >Logout</button>
               </div>
             </div>
             <div className="date-pill">📅 {getDateDisplay()}</div>
@@ -328,12 +321,10 @@ const EmployeeDashboard = () => {
           </div>
 
           <div className="white-card">
-            <h2>👥 Team Today</h2>
-            <p className="muted" style={{ marginBottom: '0.9rem' }}>
-              What your teammates are working on
-            </p>
+            <h2>👥 Team Today (Live Broadcast)</h2>
+            <p className="muted" style={{ marginBottom: '0.9rem' }}>What your teammates are currently working on</p>
             {teamToday.length === 0 ? (
-              <p className="muted" style={{ padding: '0.5rem 0' }}>No updates from teammates yet.</p>
+              <p className="muted" style={{ padding: '0.5rem 0' }}>No live updates from teammates yet.</p>
             ) : (
               <div className="team-today-list">
                 {teamToday.map((rec, i) => (
@@ -346,7 +337,9 @@ const EmployeeDashboard = () => {
                           {rec.checkOutTime ? '⚪ Checked out' : '🟢 Working'}
                         </span>
                       </div>
-                      <p className="team-today-text">{rec.task ? rec.task : 'No task added yet.'}</p>
+                      <p className="team-today-text" style={{ color: '#0d9488', fontWeight: '500' }}>
+                        {rec.liveTask ? `👉 ${rec.liveTask}` : 'No live status updated.'}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -377,9 +370,7 @@ const EmployeeDashboard = () => {
                 <div
                   className={`rocket-icon ${rocketFacingClass} ${!rocketPhase ? (isCheckedIn ? 'is-parked-right' : 'is-parked-left') : ''}`}
                   style={rocketPhase ? rocketPositionStyle : undefined}
-                >
-                  🚀
-                </div>
+                >🚀</div>
               </div>
               <div className="rocket-percent">{isCheckedIn || rocketPhase ? `${percent}%` : ''}</div>
               <p>{isCheckedIn ? 'Working...' : 'Ready to work'}</p>
@@ -390,13 +381,20 @@ const EmployeeDashboard = () => {
                 <span>▶</span> CHECK IN
               </button>
             ) : (
-              <button 
-                className="btn btn-checkout" 
-                onClick={handleCheckOut}
-                // Optional: visually disable it if you want, but alert is better UX
-              >
-                <span>⏹</span> CHECK OUT
-              </button>
+              <div style={{ marginTop: '15px', padding: '15px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#1e293b' }}>
+                  📝 End of Day Work Summary
+                </label>
+                <textarea
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', marginBottom: '10px', minHeight: '80px', fontFamily: 'inherit', resize: 'vertical' }}
+                  placeholder="Summarize your work to Check Out..."
+                  value={workSummary}
+                  onChange={(e) => setWorkSummary(e.target.value)}
+                />
+                <button className="btn btn-checkout" onClick={handleCheckOut}>
+                  <span>⏹</span> CHECK OUT
+                </button>
+              </div>
             )}
           </div>
 
@@ -410,18 +408,18 @@ const EmployeeDashboard = () => {
           </div>
 
           <div className="white-card">
-            <h2>📝 Today's Task</h2>
+            <h2>📢 Today's Task (Live Broadcast)</h2>
             <p className="muted" style={{ marginBottom: '0.8rem' }}>
-              What are you working on today?
+              Broadcast what you're currently working on to the team.
             </p>
             <textarea
               className="task-input"
-              placeholder="e.g. Editing promo video, client call at 3pm..."
-              value={todayTask}
-              onChange={(e) => setTodayTask(e.target.value)}
+              placeholder="e.g. In a meeting with client, debugging login page..."
+              value={liveTask}
+              onChange={(e) => setLiveTask(e.target.value)}
             />
-            <button className={`btn btn-save ${taskSaved ? 'saved' : ''}`} onClick={saveTask}>
-              {taskSaved ? '✔ Saved' : 'Save Task'}
+            <button className={`btn btn-save ${taskSaved ? 'saved' : ''}`} onClick={saveLiveTask}>
+              {taskSaved ? '✔ Broadcasted' : 'Broadcast Status'}
             </button>
           </div>
         </div>
@@ -444,26 +442,16 @@ const EmployeeDashboard = () => {
                   <h3>🏖️ Apply for Leave</h3>
                   <button className="leave-modal-close" onClick={() => setShowLeaveModal(false)}>✕</button>
                 </div>
-                <p className="muted" style={{ marginBottom: '1.2rem' }}>
-                  Select your leave dates and reason
-                </p>
+                <p className="muted" style={{ marginBottom: '1.2rem' }}>Select your leave dates and reason</p>
 
                 <div className="leave-date-row">
                   <div className="leave-input-group">
                     <label>From Date</label>
-                    <input
-                      type="date"
-                      value={leaveFrom}
-                      onChange={(e) => setLeaveFrom(e.target.value)}
-                    />
+                    <input type="date" value={leaveFrom} onChange={(e) => setLeaveFrom(e.target.value)} />
                   </div>
                   <div className="leave-input-group">
                     <label>To Date</label>
-                    <input
-                      type="date"
-                      value={leaveTo}
-                      onChange={(e) => setLeaveTo(e.target.value)}
-                    />
+                    <input type="date" value={leaveTo} onChange={(e) => setLeaveTo(e.target.value)} />
                   </div>
                 </div>
 
@@ -479,9 +467,7 @@ const EmployeeDashboard = () => {
 
                 <div className="leave-modal-actions">
                   <button className="btn-cancel" onClick={() => setShowLeaveModal(false)}>Cancel</button>
-                  <button className="btn-submit" onClick={handleLeaveSubmit}>
-                    Submit Request <span>→</span>
-                  </button>
+                  <button className="btn-submit" onClick={handleLeaveSubmit}>Submit Request <span>→</span></button>
                 </div>
               </>
             )}

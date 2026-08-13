@@ -34,7 +34,8 @@ const attendanceSchema = new mongoose.Schema({
     checkOutTimestamp: Number,
     status: String,
     hoursWorked: String,
-    task: String
+    task: String,       // Ithu 'Work Summary'-kku! (Admin paapanga)
+    liveTask: String    // Ithu 'Today's Task'-kku! (Employees paapanga)
 });
 const Attendance = mongoose.model('Attendance', attendanceSchema);
 
@@ -92,6 +93,8 @@ app.delete('/api/employees/:empId', async (req, res) => {
 app.post('/api/login', async (req, res) => {
     try {
         const { officeId, password } = req.body;
+        
+        // Database-la antha ID & Password vachi employee irukkangala nu thedurom
         const employee = await Employee.findOne({ empId: officeId, password: password });
         
         if (employee) {
