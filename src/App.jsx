@@ -6,8 +6,9 @@ import Login from './Login';
 import AdminDashboard from './AdminDashboard';
 import AddEmployee from './AddEmployee';
 import EmployeeDetails from './EmployeeDetails'; 
-import EmployeeAttendance from './EmployeeAttendance'; // <-- INGA CORRECT PANNIYACHU
+import EmployeeAttendance from './EmployeeAttendance'; 
 import EmployeeDashboard from './EmployeeDashboard';
+import PaymentDetails from './PaymentDetails'; // <-- PUTHUSA ADD PANNA IMPORT
 
 // --- SECURITY LOGIC (PROTECTED ROUTE) ---
 // Ithu entha link click pannalum munnadi ninnu check pannum
@@ -60,7 +61,14 @@ function App() {
         
         <Route path="/employee-attendance" element={
           <ProtectedRoute allowedRole="admin">
-            <EmployeeAttendance /> {/* <-- INGAYUM CORRECT PANNIYACHU */}
+            <EmployeeAttendance />
+          </ProtectedRoute>
+        } />
+
+        {/* PUTHUSA ADD PANNA PAYMENT DETAILS ROUTE */}
+        <Route path="/payment-details" element={
+          <ProtectedRoute allowedRole="admin">
+            <PaymentDetails />
           </ProtectedRoute>
         } />
 

@@ -17,11 +17,26 @@ const ROCKET_DURATION_MS = 2600;
 
 const EmployeeDashboard = () => {
   const navigate = useNavigate();
-  const [currentUser, setCurrentUser] = useState(null);
+  
+  // 🌟 FIX 1: Direct-aah localStorage-la irunthu user-ah edukkurom 🌟
+  const userStr = localStorage.getItem('crm_logged_user');
+  const initialUser = userStr ? JSON.parse(userStr) : null;
+  const [currentUser, setCurrentUser] = useState(initialUser);
   const [mounted, setMounted] = useState(false);
 
-  const [isCheckedIn, setIsCheckedIn] = useState(false);
-  const [checkInTimestamp, setCheckInTimestamp] = useState(null);
+  // 🌟 FIX 2: State-ah direct-aah false nu vekkama, localStorage-la nyabagam vekkirom 🌟
+  const [isCheckedIn, setIsCheckedIn] = useState(() => {
+    if (initialUser) return localStorage.getItem(`isCheckedIn_${initialUser.empId}`) === 'true';
+    return false;
+  });
+  const [checkInTimestamp, setCheckInTimestamp] = useState(() => {
+    if (initialUser) {
+      const val = localStorage.getItem(`checkInTimestamp_${initialUser.empId}`);
+      return val ? parseInt(val, 10) : null;
+    }
+    return null;
+  });
+  
   const [elapsed, setElapsed] = useState(0);
 
   const [rocketPhase, setRocketPhase] = useState(null);
@@ -30,8 +45,8 @@ const EmployeeDashboard = () => {
   const percentInterval = useRef(null);
 
   // Thani Thani States
-  const [liveTask, setLiveTask] = useState(''); // Team-kku kaata
-  const [workSummary, setWorkSummary] = useState(''); // Admin Attendance-kku anuppa
+  const [liveTask, setLiveTask] = useState(''); 
+  const [workSummary, setWorkSummary] = useState(''); 
   const [taskSaved, setTaskSaved] = useState(false);
 
   const [teamToday, setTeamToday] = useState([]);
@@ -46,7 +61,6 @@ const EmployeeDashboard = () => {
   const [leaveReason, setLeaveReason] = useState('');
   const [leaveSubmitted, setLeaveSubmitted] = useState(false);
 
-  // Render Backend Live URL
   const API_BASE_URL = 'https://diginexacrm-backend.onrender.com';
 
   const getInitials = (name = '') =>
@@ -67,29 +81,35 @@ const EmployeeDashboard = () => {
 
   useEffect(() => {
     setMounted(true);
-    const userStr = localStorage.getItem('crm_logged_user');
-    const user = userStr ? JSON.parse(userStr) : null;
     
-    if (!user || user.role !== 'employee') {
+    if (!initialUser || initialUser.role !== 'employee') {
       navigate('/login');
       return;
     }
-    setCurrentUser(user);
 
     const fetchMyStatus = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/attendance`);
         const todayKey = getDateKey();
-        const record = response.data.find(a => a.empId === user.empId && a.dateKey === todayKey);
+        const record = response.data.find(a => a.empId === initialUser.empId && a.dateKey === todayKey);
 
         if (record) {
           setLiveTask(record.liveTask || '');
           setWorkSummary(record.task || '');
+          
+          // Server data-va vechu local storage-ah thelivaa sync pandrom
           if (record.checkInTimestamp && !record.checkOutTimestamp) {
             setIsCheckedIn(true);
             setCheckInTimestamp(record.checkInTimestamp);
             setElapsed(Math.floor((Date.now() - record.checkInTimestamp) / 1000));
             setPercent(100);
+            localStorage.setItem(`isCheckedIn_${initialUser.empId}`, 'true');
+            localStorage.setItem(`checkInTimestamp_${initialUser.empId}`, record.checkInTimestamp.toString());
+          } else if (record.checkOutTimestamp) {
+            setIsCheckedIn(false);
+            setCheckInTimestamp(null);
+            localStorage.removeItem(`isCheckedIn_${initialUser.empId}`);
+            localStorage.removeItem(`checkInTimestamp_${initialUser.empId}`);
           }
         }
       } catch (error) {
@@ -98,7 +118,7 @@ const EmployeeDashboard = () => {
     };
 
     fetchMyStatus();
-    loadTeamToday(user.empId);
+    loadTeamToday(initialUser.empId);
   }, [navigate]);
 
   useEffect(() => {
@@ -184,6 +204,10 @@ const EmployeeDashboard = () => {
     setCheckInTimestamp(now);
     setElapsed(0);
 
+    // 🌟 FIX 3: Local Storage-la udatavey save pandrom (No auto-reset) 🌟
+    localStorage.setItem(`isCheckedIn_${currentUser.empId}`, 'true');
+    localStorage.setItem(`checkInTimestamp_${currentUser.empId}`, now.toString());
+
     await upsertAttendance({
       checkInTime: new Date(now).toLocaleTimeString(),
       checkInTimestamp: now,
@@ -196,18 +220,20 @@ const EmployeeDashboard = () => {
     loadTeamToday(currentUser.empId);
   };
 
-  // CHECKOUT LOGIC WITH STRICT WORK SUMMARY VALIDATION
   const handleCheckOut = async () => {
     if (!workSummary || workSummary.trim() === '') {
       showToast('⚠️ Please enter your Work Summary to check out!');
       return; 
     }
 
+    // 🌟 FIX 4: Confirmation box to prevent accidental checkouts 🌟
+    const confirmOut = window.confirm("Are you sure you want to Check Out for the day?");
+    if (!confirmOut) return;
+
     const now = Date.now();
     const finalElapsed = checkInTimestamp ? Math.floor((now - checkInTimestamp) / 1000) : elapsed;
     const hrs = (finalElapsed / 3600).toFixed(1);
 
-    // Save strictly to "task" so Admin Attendance page reads it perfectly
     await upsertAttendance({
       checkOutTime: new Date(now).toLocaleTimeString(),
       checkOutTimestamp: now,
@@ -219,10 +245,15 @@ const EmployeeDashboard = () => {
     setPercent(100);
     animatePercent(100, 1);
     clearTimeout(rocketTimer.current);
+    
     rocketTimer.current = setTimeout(() => {
       setIsCheckedIn(false);
       setCheckInTimestamp(null);
       setRocketPhase(null);
+      
+      // 🌟 Clean up local storage ONLY on manual checkout 🌟
+      localStorage.removeItem(`isCheckedIn_${currentUser.empId}`);
+      localStorage.removeItem(`checkInTimestamp_${currentUser.empId}`);
     }, ROCKET_DURATION_MS);
 
     setShowSuccess(true);
@@ -238,7 +269,6 @@ const EmployeeDashboard = () => {
       showToast('⚠️ Type your live task first!');
       return;
     }
-    // Save live status broadcast
     await upsertAttendance({ liveTask: liveTask });
     setTaskSaved(true);
     showToast('📡 Live Task broadcasted to team!');

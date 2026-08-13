@@ -1,0 +1,60 @@
+.payment-dashboard {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 20px;
+  background-color: #f8fafc;
+  min-height: 100vh;
+}
+
+.pd-header {
+  background: linear-gradient(135deg, #0f172a 0%, #115e59 100%);
+  color: white;
+  padding: 25px 30px;
+  border-radius: 12px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.pd-back-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 15px;
+  font-size: 14px;
+  transition: 0.3s;
+}
+
+.pd-back-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.pd-tabs {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 30px;
+  background: #fff;
+  padding: 10px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.pd-tab-btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+.pd-tab-btn.active {
+  background: #0d9488;
+  color: white;
+  box-shadow: 0 4px 6px rgba(13, 148, 136, 0.2);
+}
